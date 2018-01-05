@@ -2,7 +2,7 @@ import "./style"
 import React from "react"
 import Clipboard from "clipboard"
 import { fetch } from "qiniu"
-import { getItem } from "db"
+import db from "db"
 import toastr from "toastr"
 import swal from "sweetalert"
 
@@ -67,7 +67,7 @@ export default class History extends React.Component {
   }
 
   renderItem(item) {
-    const url = `http://${getItem("bucketDomain")}/${item.key}`
+    const url = `http://${db.bucketDomain}/${item.key}`
     return (
       <div key={ item.hash } className="history__grid__item">
         <img src={ url} />

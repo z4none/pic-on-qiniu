@@ -5,7 +5,7 @@
   "main": "entry.jsx",
   "scripts": {
     "dev": "webpack-dev-server --hot --inline --content-base chrome",
-    "build": "NODE_ENV=production webpack && zip -r chrome.zip chrome"
+    "build": "set NODE_ENV=production && webpack"
   },
   "author": "CJ Ting<fatelovely1128@gmail.com>",
   "license": "ISC",

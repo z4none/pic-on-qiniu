@@ -44,7 +44,7 @@
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	"use strict";
+	/* WEBPACK VAR INJECTION */(function(module) {"use strict";
 
 	__webpack_require__(262);
 
@@ -68,9 +68,10 @@
 
 	_reactDom2.default.render(_react2.default.createElement(_app2.default, null), document.getElementById("app-container"));
 
-	if (false) {
+	if (true) {
 	  module.hot.accept();
 	}
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(276)(module)))
 
 /***/ },
 /* 1 */
@@ -246,6 +247,10 @@
 	process.removeListener = noop;
 	process.removeAllListeners = noop;
 	process.emit = noop;
+	process.prependListener = noop;
+	process.prependOnceListener = noop;
+
+	process.listeners = function (name) { return [] }
 
 	process.binding = function (name) {
 	    throw new Error('process.binding is not supported');
@@ -10819,7 +10824,7 @@
 	 * Project: https://github.com/CodeSeven/toastr
 	 */
 	/* global define */
-	; (function (define) {
+	(function (define) {
 	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(197)], __WEBPACK_AMD_DEFINE_RESULT__ = function ($) {
 	        return (function () {
 	            var $container;
@@ -10841,7 +10846,7 @@
 	                options: {},
 	                subscribe: subscribe,
 	                success: success,
-	                version: '2.1.2',
+	                version: '2.1.4',
 	                warning: warning
 	            };
 
@@ -10952,9 +10957,7 @@
 	            function createContainer(options) {
 	                $container = $('<div/>')
 	                    .attr('id', options.containerId)
-	                    .addClass(options.positionClass)
-	                    .attr('aria-live', 'polite')
-	                    .attr('role', 'alert');
+	                    .addClass(options.positionClass);
 
 	                $container.appendTo($(options.target));
 	                return $container;
@@ -10978,6 +10981,7 @@
 	                    closeMethod: false,
 	                    closeDuration: false,
 	                    closeEasing: false,
+	                    closeOnHover: true,
 
 	                    extendedTimeOut: 1000,
 	                    iconClasses: {
@@ -10994,9 +10998,12 @@
 	                    escapeHtml: false,
 	                    target: 'body',
 	                    closeHtml: '<button type="button">&times;</button>',
+	                    closeClass: 'toast-close-button',
 	                    newestOnTop: true,
 	                    preventDuplicates: false,
-	                    progressBar: false
+	                    progressBar: false,
+	                    progressClass: 'toast-progress',
+	                    rtl: false
 	                };
 	            }
 
@@ -11054,10 +11061,11 @@
 	                return $toastElement;
 
 	                function escapeHtml(source) {
-	                    if (source == null)
-	                        source = "";
+	                    if (source == null) {
+	                        source = '';
+	                    }
 
-	                    return new String(source)
+	                    return source
 	                        .replace(/&/g, '&amp;')
 	                        .replace(/"/g, '&quot;')
 	                        .replace(/'/g, '&#39;')
@@ -11071,11 +11079,29 @@
 	                    setMessage();
 	                    setCloseButton();
 	                    setProgressBar();
+	                    setRTL();
 	                    setSequence();
+	                    setAria();
+	                }
+
+	                function setAria() {
+	                    var ariaValue = '';
+	                    switch (map.iconClass) {
+	                        case 'toast-success':
+	                        case 'toast-info':
+	                            ariaValue =  'polite';
+	                            break;
+	                        default:
+	                            ariaValue = 'assertive';
+	                    }
+	                    $toastElement.attr('aria-live', ariaValue);
 	                }
 
 	                function handleEvents() {
-	                    $toastElement.hover(stickAround, delayedHideToast);
+	                    if (options.closeOnHover) {
+	                        $toastElement.hover(stickAround, delayedHideToast);
+	                    }
+
 	                    if (!options.onclick && options.tapToDismiss) {
 	                        $toastElement.click(hideToast);
 	                    }
@@ -11087,6 +11113,11 @@
 	                            } else if (event.cancelBubble !== undefined && event.cancelBubble !== true) {
 	                                event.cancelBubble = true;
 	                            }
+
+	                            if (options.onCloseClick) {
+	                                options.onCloseClick(event);
+	                            }
+
 	                            hideToast(true);
 	                        });
 	                    }
@@ -11132,29 +11163,43 @@
 
 	                function setTitle() {
 	                    if (map.title) {
-	                        $titleElement.append(!options.escapeHtml ? map.title : escapeHtml(map.title)).addClass(options.titleClass);
+	                        var suffix = map.title;
+	                        if (options.escapeHtml) {
+	                            suffix = escapeHtml(map.title);
+	                        }
+	                        $titleElement.append(suffix).addClass(options.titleClass);
 	                        $toastElement.append($titleElement);
 	                    }
 	                }
 
 	                function setMessage() {
 	                    if (map.message) {
-	                        $messageElement.append(!options.escapeHtml ? map.message : escapeHtml(map.message)).addClass(options.messageClass);
+	                        var suffix = map.message;
+	                        if (options.escapeHtml) {
+	                            suffix = escapeHtml(map.message);
+	                        }
+	                        $messageElement.append(suffix).addClass(options.messageClass);
 	                        $toastElement.append($messageElement);
 	                    }
 	                }
 
 	                function setCloseButton() {
 	                    if (options.closeButton) {
-	                        $closeElement.addClass('toast-close-button').attr('role', 'button');
+	                        $closeElement.addClass(options.closeClass).attr('role', 'button');
 	                        $toastElement.prepend($closeElement);
 	                    }
 	                }
 
 	                function setProgressBar() {
 	                    if (options.progressBar) {
-	                        $progressElement.addClass('toast-progress');
+	                        $progressElement.addClass(options.progressClass);
 	                        $toastElement.prepend($progressElement);
+	                    }
+	                }
+
+	                function setRTL() {
+	                    if (options.rtl) {
+	                        $toastElement.addClass('rtl');
 	                    }
 	                }
 
@@ -11183,6 +11228,7 @@
 	                        easing: easing,
 	                        complete: function () {
 	                            removeToast($toastElement);
+	                            clearTimeout(intervalId);
 	                            if (options.onHidden && response.state !== 'hidden') {
 	                                options.onHidden();
 	                            }
@@ -12665,7 +12711,30 @@
 	    return array;
 	}());
 
-	exports.arrayToObject = function (source, options) {
+	var compactQueue = function compactQueue(queue) {
+	    var obj;
+
+	    while (queue.length) {
+	        var item = queue.pop();
+	        obj = item.obj[item.prop];
+
+	        if (Array.isArray(obj)) {
+	            var compacted = [];
+
+	            for (var j = 0; j < obj.length; ++j) {
+	                if (typeof obj[j] !== 'undefined') {
+	                    compacted.push(obj[j]);
+	                }
+	            }
+
+	            item.obj[item.prop] = compacted;
+	        }
+	    }
+
+	    return obj;
+	};
+
+	exports.arrayToObject = function arrayToObject(source, options) {
 	    var obj = options && options.plainObjects ? Object.create(null) : {};
 	    for (var i = 0; i < source.length; ++i) {
 	        if (typeof source[i] !== 'undefined') {
@@ -12676,7 +12745,7 @@
 	    return obj;
 	};
 
-	exports.merge = function (target, source, options) {
+	exports.merge = function merge(target, source, options) {
 	    if (!source) {
 	        return target;
 	    }
@@ -12685,7 +12754,9 @@
 	        if (Array.isArray(target)) {
 	            target.push(source);
 	        } else if (typeof target === 'object') {
-	            target[source] = true;
+	            if (options.plainObjects || options.allowPrototypes || !has.call(Object.prototype, source)) {
+	                target[source] = true;
+	            }
 	        } else {
 	            return [target, source];
 	        }
@@ -12720,13 +12791,20 @@
 	    return Object.keys(source).reduce(function (acc, key) {
 	        var value = source[key];
 
-	        if (Object.prototype.hasOwnProperty.call(acc, key)) {
+	        if (has.call(acc, key)) {
 	            acc[key] = exports.merge(acc[key], value, options);
 	        } else {
 	            acc[key] = value;
 	        }
 	        return acc;
 	    }, mergeTarget);
+	};
+
+	exports.assign = function assignSingleSource(target, source) {
+	    return Object.keys(source).reduce(function (acc, key) {
+	        acc[key] = source[key];
+	        return acc;
+	    }, target);
 	};
 
 	exports.decode = function (str) {
@@ -12737,7 +12815,7 @@
 	    }
 	};
 
-	exports.encode = function (str) {
+	exports.encode = function encode(str) {
 	    // This code was originally written by Brian White (mscdex) for the io.js core querystring library.
 	    // It has been adapted here for stricter adherence to RFC 3986
 	    if (str.length === 0) {
@@ -12751,13 +12829,13 @@
 	        var c = string.charCodeAt(i);
 
 	        if (
-	            c === 0x2D || // -
-	            c === 0x2E || // .
-	            c === 0x5F || // _
-	            c === 0x7E || // ~
-	            (c >= 0x30 && c <= 0x39) || // 0-9
-	            (c >= 0x41 && c <= 0x5A) || // a-z
-	            (c >= 0x61 && c <= 0x7A) // A-Z
+	            c === 0x2D // -
+	            || c === 0x2E // .
+	            || c === 0x5F // _
+	            || c === 0x7E // ~
+	            || (c >= 0x30 && c <= 0x39) // 0-9
+	            || (c >= 0x41 && c <= 0x5A) // a-z
+	            || (c >= 0x61 && c <= 0x7A) // A-Z
 	        ) {
 	            out += string.charAt(i);
 	            continue;
@@ -12780,52 +12858,42 @@
 
 	        i += 1;
 	        c = 0x10000 + (((c & 0x3FF) << 10) | (string.charCodeAt(i) & 0x3FF));
-	        out += hexTable[0xF0 | (c >> 18)] + hexTable[0x80 | ((c >> 12) & 0x3F)] + hexTable[0x80 | ((c >> 6) & 0x3F)] + hexTable[0x80 | (c & 0x3F)];
+	        out += hexTable[0xF0 | (c >> 18)]
+	            + hexTable[0x80 | ((c >> 12) & 0x3F)]
+	            + hexTable[0x80 | ((c >> 6) & 0x3F)]
+	            + hexTable[0x80 | (c & 0x3F)];
 	    }
 
 	    return out;
 	};
 
-	exports.compact = function (obj, references) {
-	    if (typeof obj !== 'object' || obj === null) {
-	        return obj;
-	    }
+	exports.compact = function compact(value) {
+	    var queue = [{ obj: { o: value }, prop: 'o' }];
+	    var refs = [];
 
-	    var refs = references || [];
-	    var lookup = refs.indexOf(obj);
-	    if (lookup !== -1) {
-	        return refs[lookup];
-	    }
+	    for (var i = 0; i < queue.length; ++i) {
+	        var item = queue[i];
+	        var obj = item.obj[item.prop];
 
-	    refs.push(obj);
-
-	    if (Array.isArray(obj)) {
-	        var compacted = [];
-
-	        for (var i = 0; i < obj.length; ++i) {
-	            if (obj[i] && typeof obj[i] === 'object') {
-	                compacted.push(exports.compact(obj[i], refs));
-	            } else if (typeof obj[i] !== 'undefined') {
-	                compacted.push(obj[i]);
+	        var keys = Object.keys(obj);
+	        for (var j = 0; j < keys.length; ++j) {
+	            var key = keys[j];
+	            var val = obj[key];
+	            if (typeof val === 'object' && val !== null && refs.indexOf(val) === -1) {
+	                queue.push({ obj: obj, prop: key });
+	                refs.push(val);
 	            }
 	        }
-
-	        return compacted;
 	    }
 
-	    var keys = Object.keys(obj);
-	    keys.forEach(function (key) {
-	        obj[key] = exports.compact(obj[key], refs);
-	    });
-
-	    return obj;
+	    return compactQueue(queue);
 	};
 
-	exports.isRegExp = function (obj) {
+	exports.isRegExp = function isRegExp(obj) {
 	    return Object.prototype.toString.call(obj) === '[object RegExp]';
 	};
 
-	exports.isBuffer = function (obj) {
+	exports.isBuffer = function isBuffer(obj) {
 	    if (obj === null || typeof obj === 'undefined') {
 	        return false;
 	    }
@@ -18265,6 +18333,8 @@
 
 	var _db = __webpack_require__(47);
 
+	var _db2 = _interopRequireDefault(_db);
+
 	var _toastr = __webpack_require__(71);
 
 	var _toastr2 = _interopRequireDefault(_toastr);
@@ -18358,7 +18428,7 @@
 	  }, {
 	    key: "renderItem",
 	    value: function renderItem(item) {
-	      var url = "http://" + (0, _db.getItem)("bucketDomain") + "/" + item.key;
+	      var url = "http://" + _db2.default.bucketDomain + "/" + item.key;
 	      return _react2.default.createElement(
 	        "div",
 	        { key: item.hash, className: "history__grid__item" },
@@ -22381,7 +22451,7 @@
 
 
 	// module
-	exports.push([module.id, "/*\n* @Author: CJ Ting\n* @Date: 2017-01-22 21:54:15\n* @Email: fatelovely1128@gmail.com\n*/\n._loading {\n  font-size: 10px;\n  text-indent: -9999em;\n  width: 40px;\n  height: 40px;\n  border-radius: 50%;\n  background: #929292;\n  background: -moz-linear-gradient(left, #929292 10%, rgba(146,146,146, 0) 42%);\n  background: -webkit-linear-gradient(left, #929292 10%, rgba(146,146,146, 0) 42%);\n  background: -o-linear-gradient(left, #929292 10%, rgba(146,146,146, 0) 42%);\n  background: -ms-linear-gradient(left, #929292 10%, rgba(146,146,146, 0) 42%);\n  background: linear-gradient(to right, #929292 10%, rgba(146,146,146, 0) 42%);\n  position: relative;\n  -webkit-animation: load3 1.4s infinite linear;\n  animation: load3 1.4s infinite linear;\n  -webkit-transform: translateZ(0);\n  -ms-transform: translateZ(0);\n  transform: translateZ(0);\n}\n._loading:before {\n  width: 50%;\n  height: 50%;\n  background: #929292;\n  border-radius: 100% 0 0 0;\n  position: absolute;\n  top: 0;\n  left: 0;\n  content: '';\n}\n._loading:after {\n  background: #fff;\n  width: 75%;\n  height: 75%;\n  border-radius: 50%;\n  content: '';\n  margin: auto;\n  position: absolute;\n  top: 0;\n  left: 0;\n  bottom: 0;\n  right: 0;\n}\n@-webkit-keyframes load3 {\n  0% {\n    -webkit-transform: rotate(0deg);\n    transform: rotate(0deg);\n  }\n  100% {\n    -webkit-transform: rotate(360deg);\n    transform: rotate(360deg);\n  }\n}\n@keyframes load3 {\n  0% {\n    -webkit-transform: rotate(0deg);\n    transform: rotate(0deg);\n  }\n  100% {\n    -webkit-transform: rotate(360deg);\n    transform: rotate(360deg);\n  }\n}\n\n", ""]);
+	exports.push([module.id, "/*\r\n* @Author: CJ Ting\r\n* @Date: 2017-01-22 21:54:15\r\n* @Email: fatelovely1128@gmail.com\r\n*/\r\n._loading {\r\n  font-size: 10px;\r\n  text-indent: -9999em;\r\n  width: 40px;\r\n  height: 40px;\r\n  border-radius: 50%;\r\n  background: #929292;\r\n  background: -moz-linear-gradient(left, #929292 10%, rgba(146,146,146, 0) 42%);\r\n  background: -webkit-linear-gradient(left, #929292 10%, rgba(146,146,146, 0) 42%);\r\n  background: -o-linear-gradient(left, #929292 10%, rgba(146,146,146, 0) 42%);\r\n  background: -ms-linear-gradient(left, #929292 10%, rgba(146,146,146, 0) 42%);\r\n  background: linear-gradient(to right, #929292 10%, rgba(146,146,146, 0) 42%);\r\n  position: relative;\r\n  -webkit-animation: load3 1.4s infinite linear;\r\n  animation: load3 1.4s infinite linear;\r\n  -webkit-transform: translateZ(0);\r\n  -ms-transform: translateZ(0);\r\n  transform: translateZ(0);\r\n}\r\n._loading:before {\r\n  width: 50%;\r\n  height: 50%;\r\n  background: #929292;\r\n  border-radius: 100% 0 0 0;\r\n  position: absolute;\r\n  top: 0;\r\n  left: 0;\r\n  content: '';\r\n}\r\n._loading:after {\r\n  background: #fff;\r\n  width: 75%;\r\n  height: 75%;\r\n  border-radius: 50%;\r\n  content: '';\r\n  margin: auto;\r\n  position: absolute;\r\n  top: 0;\r\n  left: 0;\r\n  bottom: 0;\r\n  right: 0;\r\n}\r\n@-webkit-keyframes load3 {\r\n  0% {\r\n    -webkit-transform: rotate(0deg);\r\n    transform: rotate(0deg);\r\n  }\r\n  100% {\r\n    -webkit-transform: rotate(360deg);\r\n    transform: rotate(360deg);\r\n  }\r\n}\r\n@keyframes load3 {\r\n  0% {\r\n    -webkit-transform: rotate(0deg);\r\n    transform: rotate(0deg);\r\n  }\r\n  100% {\r\n    -webkit-transform: rotate(360deg);\r\n    transform: rotate(360deg);\r\n  }\r\n}\r\n\r\n", ""]);
 
 	// exports
 
@@ -22493,7 +22563,7 @@
 
 
 	// module
-	exports.push([module.id, ".toast-title{font-weight:700}.toast-message{-ms-word-wrap:break-word;word-wrap:break-word}.toast-message a,.toast-message label{color:#fff}.toast-message a:hover{color:#ccc;text-decoration:none}.toast-close-button{position:relative;right:-.3em;top:-.3em;float:right;font-size:20px;font-weight:700;color:#fff;-webkit-text-shadow:0 1px 0 #fff;text-shadow:0 1px 0 #fff;opacity:.8;-ms-filter:progid:DXImageTransform.Microsoft.Alpha(Opacity=80);filter:alpha(opacity=80)}.toast-close-button:focus,.toast-close-button:hover{color:#000;text-decoration:none;cursor:pointer;opacity:.4;-ms-filter:progid:DXImageTransform.Microsoft.Alpha(Opacity=40);filter:alpha(opacity=40)}button.toast-close-button{padding:0;cursor:pointer;background:0 0;border:0;-webkit-appearance:none}.toast-top-center{top:0;right:0;width:100%}.toast-bottom-center{bottom:0;right:0;width:100%}.toast-top-full-width{top:0;right:0;width:100%}.toast-bottom-full-width{bottom:0;right:0;width:100%}.toast-top-left{top:12px;left:12px}.toast-top-right{top:12px;right:12px}.toast-bottom-right{right:12px;bottom:12px}.toast-bottom-left{bottom:12px;left:12px}#toast-container{position:fixed;z-index:999999;pointer-events:none}#toast-container *{-moz-box-sizing:border-box;-webkit-box-sizing:border-box;box-sizing:border-box}#toast-container>div{position:relative;pointer-events:auto;overflow:hidden;margin:0 0 6px;padding:15px 15px 15px 50px;width:300px;-moz-border-radius:3px;-webkit-border-radius:3px;border-radius:3px;background-position:15px center;background-repeat:no-repeat;-moz-box-shadow:0 0 12px #999;-webkit-box-shadow:0 0 12px #999;box-shadow:0 0 12px #999;color:#fff;opacity:.8;-ms-filter:progid:DXImageTransform.Microsoft.Alpha(Opacity=80);filter:alpha(opacity=80)}#toast-container>:hover{-moz-box-shadow:0 0 12px #000;-webkit-box-shadow:0 0 12px #000;box-shadow:0 0 12px #000;opacity:1;-ms-filter:progid:DXImageTransform.Microsoft.Alpha(Opacity=100);filter:alpha(opacity=100);cursor:pointer}#toast-container>.toast-info{background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAGwSURBVEhLtZa9SgNBEMc9sUxxRcoUKSzSWIhXpFMhhYWFhaBg4yPYiWCXZxBLERsLRS3EQkEfwCKdjWJAwSKCgoKCcudv4O5YLrt7EzgXhiU3/4+b2ckmwVjJSpKkQ6wAi4gwhT+z3wRBcEz0yjSseUTrcRyfsHsXmD0AmbHOC9Ii8VImnuXBPglHpQ5wwSVM7sNnTG7Za4JwDdCjxyAiH3nyA2mtaTJufiDZ5dCaqlItILh1NHatfN5skvjx9Z38m69CgzuXmZgVrPIGE763Jx9qKsRozWYw6xOHdER+nn2KkO+Bb+UV5CBN6WC6QtBgbRVozrahAbmm6HtUsgtPC19tFdxXZYBOfkbmFJ1VaHA1VAHjd0pp70oTZzvR+EVrx2Ygfdsq6eu55BHYR8hlcki+n+kERUFG8BrA0BwjeAv2M8WLQBtcy+SD6fNsmnB3AlBLrgTtVW1c2QN4bVWLATaIS60J2Du5y1TiJgjSBvFVZgTmwCU+dAZFoPxGEEs8nyHC9Bwe2GvEJv2WXZb0vjdyFT4Cxk3e/kIqlOGoVLwwPevpYHT+00T+hWwXDf4AJAOUqWcDhbwAAAAASUVORK5CYII=)!important}#toast-container>.toast-error{background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAHOSURBVEhLrZa/SgNBEMZzh0WKCClSCKaIYOED+AAKeQQLG8HWztLCImBrYadgIdY+gIKNYkBFSwu7CAoqCgkkoGBI/E28PdbLZmeDLgzZzcx83/zZ2SSXC1j9fr+I1Hq93g2yxH4iwM1vkoBWAdxCmpzTxfkN2RcyZNaHFIkSo10+8kgxkXIURV5HGxTmFuc75B2RfQkpxHG8aAgaAFa0tAHqYFfQ7Iwe2yhODk8+J4C7yAoRTWI3w/4klGRgR4lO7Rpn9+gvMyWp+uxFh8+H+ARlgN1nJuJuQAYvNkEnwGFck18Er4q3egEc/oO+mhLdKgRyhdNFiacC0rlOCbhNVz4H9FnAYgDBvU3QIioZlJFLJtsoHYRDfiZoUyIxqCtRpVlANq0EU4dApjrtgezPFad5S19Wgjkc0hNVnuF4HjVA6C7QrSIbylB+oZe3aHgBsqlNqKYH48jXyJKMuAbiyVJ8KzaB3eRc0pg9VwQ4niFryI68qiOi3AbjwdsfnAtk0bCjTLJKr6mrD9g8iq/S/B81hguOMlQTnVyG40wAcjnmgsCNESDrjme7wfftP4P7SP4N3CJZdvzoNyGq2c/HWOXJGsvVg+RA/k2MC/wN6I2YA2Pt8GkAAAAASUVORK5CYII=)!important}#toast-container>.toast-success{background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAADsSURBVEhLY2AYBfQMgf///3P8+/evAIgvA/FsIF+BavYDDWMBGroaSMMBiE8VC7AZDrIFaMFnii3AZTjUgsUUWUDA8OdAH6iQbQEhw4HyGsPEcKBXBIC4ARhex4G4BsjmweU1soIFaGg/WtoFZRIZdEvIMhxkCCjXIVsATV6gFGACs4Rsw0EGgIIH3QJYJgHSARQZDrWAB+jawzgs+Q2UO49D7jnRSRGoEFRILcdmEMWGI0cm0JJ2QpYA1RDvcmzJEWhABhD/pqrL0S0CWuABKgnRki9lLseS7g2AlqwHWQSKH4oKLrILpRGhEQCw2LiRUIa4lwAAAABJRU5ErkJggg==)!important}#toast-container>.toast-warning{background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAGYSURBVEhL5ZSvTsNQFMbXZGICMYGYmJhAQIJAICYQPAACiSDB8AiICQQJT4CqQEwgJvYASAQCiZiYmJhAIBATCARJy+9rTsldd8sKu1M0+dLb057v6/lbq/2rK0mS/TRNj9cWNAKPYIJII7gIxCcQ51cvqID+GIEX8ASG4B1bK5gIZFeQfoJdEXOfgX4QAQg7kH2A65yQ87lyxb27sggkAzAuFhbbg1K2kgCkB1bVwyIR9m2L7PRPIhDUIXgGtyKw575yz3lTNs6X4JXnjV+LKM/m3MydnTbtOKIjtz6VhCBq4vSm3ncdrD2lk0VgUXSVKjVDJXJzijW1RQdsU7F77He8u68koNZTz8Oz5yGa6J3H3lZ0xYgXBK2QymlWWA+RWnYhskLBv2vmE+hBMCtbA7KX5drWyRT/2JsqZ2IvfB9Y4bWDNMFbJRFmC9E74SoS0CqulwjkC0+5bpcV1CZ8NMej4pjy0U+doDQsGyo1hzVJttIjhQ7GnBtRFN1UarUlH8F3xict+HY07rEzoUGPlWcjRFRr4/gChZgc3ZL2d8oAAAAASUVORK5CYII=)!important}#toast-container.toast-bottom-center>div,#toast-container.toast-top-center>div{width:300px;margin-left:auto;margin-right:auto}#toast-container.toast-bottom-full-width>div,#toast-container.toast-top-full-width>div{width:96%;margin-left:auto;margin-right:auto}.toast{background-color:#030303}.toast-success{background-color:#51a351}.toast-error{background-color:#bd362f}.toast-info{background-color:#2f96b4}.toast-warning{background-color:#f89406}.toast-progress{position:absolute;left:0;bottom:0;height:4px;background-color:#000;opacity:.4;-ms-filter:progid:DXImageTransform.Microsoft.Alpha(Opacity=40);filter:alpha(opacity=40)}@media all and (max-width:240px){#toast-container>div{padding:8px 8px 8px 50px;width:11em}#toast-container .toast-close-button{right:-.2em;top:-.2em}}@media all and (min-width:241px) and (max-width:480px){#toast-container>div{padding:8px 8px 8px 50px;width:18em}#toast-container .toast-close-button{right:-.2em;top:-.2em}}@media all and (min-width:481px) and (max-width:768px){#toast-container>div{padding:15px 15px 15px 50px;width:25em}}", ""]);
+	exports.push([module.id, ".toast-title{font-weight:700}.toast-message{-ms-word-wrap:break-word;word-wrap:break-word}.toast-message a,.toast-message label{color:#FFF}.toast-message a:hover{color:#CCC;text-decoration:none}.toast-close-button{position:relative;right:-.3em;top:-.3em;float:right;font-size:20px;font-weight:700;color:#FFF;-webkit-text-shadow:0 1px 0 #fff;text-shadow:0 1px 0 #fff;opacity:.8;-ms-filter:progid:DXImageTransform.Microsoft.Alpha(Opacity=80);filter:alpha(opacity=80);line-height:1}.toast-close-button:focus,.toast-close-button:hover{color:#000;text-decoration:none;cursor:pointer;opacity:.4;-ms-filter:progid:DXImageTransform.Microsoft.Alpha(Opacity=40);filter:alpha(opacity=40)}.rtl .toast-close-button{left:-.3em;float:left;right:.3em}button.toast-close-button{padding:0;cursor:pointer;background:0 0;border:0;-webkit-appearance:none}.toast-top-center{top:0;right:0;width:100%}.toast-bottom-center{bottom:0;right:0;width:100%}.toast-top-full-width{top:0;right:0;width:100%}.toast-bottom-full-width{bottom:0;right:0;width:100%}.toast-top-left{top:12px;left:12px}.toast-top-right{top:12px;right:12px}.toast-bottom-right{right:12px;bottom:12px}.toast-bottom-left{bottom:12px;left:12px}#toast-container{position:fixed;z-index:999999;pointer-events:none}#toast-container *{-moz-box-sizing:border-box;-webkit-box-sizing:border-box;box-sizing:border-box}#toast-container>div{position:relative;pointer-events:auto;overflow:hidden;margin:0 0 6px;padding:15px 15px 15px 50px;width:300px;-moz-border-radius:3px;-webkit-border-radius:3px;border-radius:3px;background-position:15px center;background-repeat:no-repeat;-moz-box-shadow:0 0 12px #999;-webkit-box-shadow:0 0 12px #999;box-shadow:0 0 12px #999;color:#FFF;opacity:.8;-ms-filter:progid:DXImageTransform.Microsoft.Alpha(Opacity=80);filter:alpha(opacity=80)}#toast-container>div.rtl{direction:rtl;padding:15px 50px 15px 15px;background-position:right 15px center}#toast-container>div:hover{-moz-box-shadow:0 0 12px #000;-webkit-box-shadow:0 0 12px #000;box-shadow:0 0 12px #000;opacity:1;-ms-filter:progid:DXImageTransform.Microsoft.Alpha(Opacity=100);filter:alpha(opacity=100);cursor:pointer}#toast-container>.toast-info{background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAGwSURBVEhLtZa9SgNBEMc9sUxxRcoUKSzSWIhXpFMhhYWFhaBg4yPYiWCXZxBLERsLRS3EQkEfwCKdjWJAwSKCgoKCcudv4O5YLrt7EzgXhiU3/4+b2ckmwVjJSpKkQ6wAi4gwhT+z3wRBcEz0yjSseUTrcRyfsHsXmD0AmbHOC9Ii8VImnuXBPglHpQ5wwSVM7sNnTG7Za4JwDdCjxyAiH3nyA2mtaTJufiDZ5dCaqlItILh1NHatfN5skvjx9Z38m69CgzuXmZgVrPIGE763Jx9qKsRozWYw6xOHdER+nn2KkO+Bb+UV5CBN6WC6QtBgbRVozrahAbmm6HtUsgtPC19tFdxXZYBOfkbmFJ1VaHA1VAHjd0pp70oTZzvR+EVrx2Ygfdsq6eu55BHYR8hlcki+n+kERUFG8BrA0BwjeAv2M8WLQBtcy+SD6fNsmnB3AlBLrgTtVW1c2QN4bVWLATaIS60J2Du5y1TiJgjSBvFVZgTmwCU+dAZFoPxGEEs8nyHC9Bwe2GvEJv2WXZb0vjdyFT4Cxk3e/kIqlOGoVLwwPevpYHT+00T+hWwXDf4AJAOUqWcDhbwAAAAASUVORK5CYII=)!important}#toast-container>.toast-error{background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAHOSURBVEhLrZa/SgNBEMZzh0WKCClSCKaIYOED+AAKeQQLG8HWztLCImBrYadgIdY+gIKNYkBFSwu7CAoqCgkkoGBI/E28PdbLZmeDLgzZzcx83/zZ2SSXC1j9fr+I1Hq93g2yxH4iwM1vkoBWAdxCmpzTxfkN2RcyZNaHFIkSo10+8kgxkXIURV5HGxTmFuc75B2RfQkpxHG8aAgaAFa0tAHqYFfQ7Iwe2yhODk8+J4C7yAoRTWI3w/4klGRgR4lO7Rpn9+gvMyWp+uxFh8+H+ARlgN1nJuJuQAYvNkEnwGFck18Er4q3egEc/oO+mhLdKgRyhdNFiacC0rlOCbhNVz4H9FnAYgDBvU3QIioZlJFLJtsoHYRDfiZoUyIxqCtRpVlANq0EU4dApjrtgezPFad5S19Wgjkc0hNVnuF4HjVA6C7QrSIbylB+oZe3aHgBsqlNqKYH48jXyJKMuAbiyVJ8KzaB3eRc0pg9VwQ4niFryI68qiOi3AbjwdsfnAtk0bCjTLJKr6mrD9g8iq/S/B81hguOMlQTnVyG40wAcjnmgsCNESDrjme7wfftP4P7SP4N3CJZdvzoNyGq2c/HWOXJGsvVg+RA/k2MC/wN6I2YA2Pt8GkAAAAASUVORK5CYII=)!important}#toast-container>.toast-success{background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAADsSURBVEhLY2AYBfQMgf///3P8+/evAIgvA/FsIF+BavYDDWMBGroaSMMBiE8VC7AZDrIFaMFnii3AZTjUgsUUWUDA8OdAH6iQbQEhw4HyGsPEcKBXBIC4ARhex4G4BsjmweU1soIFaGg/WtoFZRIZdEvIMhxkCCjXIVsATV6gFGACs4Rsw0EGgIIH3QJYJgHSARQZDrWAB+jawzgs+Q2UO49D7jnRSRGoEFRILcdmEMWGI0cm0JJ2QpYA1RDvcmzJEWhABhD/pqrL0S0CWuABKgnRki9lLseS7g2AlqwHWQSKH4oKLrILpRGhEQCw2LiRUIa4lwAAAABJRU5ErkJggg==)!important}#toast-container>.toast-warning{background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAGYSURBVEhL5ZSvTsNQFMbXZGICMYGYmJhAQIJAICYQPAACiSDB8AiICQQJT4CqQEwgJvYASAQCiZiYmJhAIBATCARJy+9rTsldd8sKu1M0+dLb057v6/lbq/2rK0mS/TRNj9cWNAKPYIJII7gIxCcQ51cvqID+GIEX8ASG4B1bK5gIZFeQfoJdEXOfgX4QAQg7kH2A65yQ87lyxb27sggkAzAuFhbbg1K2kgCkB1bVwyIR9m2L7PRPIhDUIXgGtyKw575yz3lTNs6X4JXnjV+LKM/m3MydnTbtOKIjtz6VhCBq4vSm3ncdrD2lk0VgUXSVKjVDJXJzijW1RQdsU7F77He8u68koNZTz8Oz5yGa6J3H3lZ0xYgXBK2QymlWWA+RWnYhskLBv2vmE+hBMCtbA7KX5drWyRT/2JsqZ2IvfB9Y4bWDNMFbJRFmC9E74SoS0CqulwjkC0+5bpcV1CZ8NMej4pjy0U+doDQsGyo1hzVJttIjhQ7GnBtRFN1UarUlH8F3xict+HY07rEzoUGPlWcjRFRr4/gChZgc3ZL2d8oAAAAASUVORK5CYII=)!important}#toast-container.toast-bottom-center>div,#toast-container.toast-top-center>div{width:300px;margin-left:auto;margin-right:auto}#toast-container.toast-bottom-full-width>div,#toast-container.toast-top-full-width>div{width:96%;margin-left:auto;margin-right:auto}.toast{background-color:#030303}.toast-success{background-color:#51A351}.toast-error{background-color:#BD362F}.toast-info{background-color:#2F96B4}.toast-warning{background-color:#F89406}.toast-progress{position:absolute;left:0;bottom:0;height:4px;background-color:#000;opacity:.4;-ms-filter:progid:DXImageTransform.Microsoft.Alpha(Opacity=40);filter:alpha(opacity=40)}@media all and (max-width:240px){#toast-container>div{padding:8px 8px 8px 50px;width:11em}#toast-container>div.rtl{padding:8px 50px 8px 8px}#toast-container .toast-close-button{right:-.2em;top:-.2em}#toast-container .rtl .toast-close-button{left:-.2em;right:.2em}}@media all and (min-width:241px) and (max-width:480px){#toast-container>div{padding:8px 8px 8px 50px;width:18em}#toast-container>div.rtl{padding:8px 50px 8px 8px}#toast-container .toast-close-button{right:-.2em;top:-.2em}#toast-container .rtl .toast-close-button{left:-.2em;right:.2em}}@media all and (min-width:481px) and (max-width:768px){#toast-container>div{padding:15px 15px 15px 50px;width:25em}#toast-container>div.rtl{padding:15px 50px 15px 15px}}", ""]);
 
 	// exports
 
@@ -22507,7 +22577,7 @@
 	/**
 	 * A polyfill for Element.matches()
 	 */
-	if (Element && !Element.prototype.matches) {
+	if (typeof Element !== 'undefined' && !Element.prototype.matches) {
 	    var proto = Element.prototype;
 
 	    proto.matches = proto.matchesSelector ||
@@ -22526,7 +22596,10 @@
 	 */
 	function closest (element, selector) {
 	    while (element && element.nodeType !== DOCUMENT_NODE_TYPE) {
-	        if (element.matches(selector)) return element;
+	        if (typeof element.matches === 'function' &&
+	            element.matches(selector)) {
+	          return element;
+	        }
 	        element = element.parentNode;
 	    }
 	}
@@ -22550,7 +22623,7 @@
 	 * @param {Boolean} useCapture
 	 * @return {Object}
 	 */
-	function delegate(element, selector, type, callback, useCapture) {
+	function _delegate(element, selector, type, callback, useCapture) {
 	    var listenerFn = listener.apply(this, arguments);
 
 	    element.addEventListener(type, listenerFn, useCapture);
@@ -22560,6 +22633,40 @@
 	            element.removeEventListener(type, listenerFn, useCapture);
 	        }
 	    }
+	}
+
+	/**
+	 * Delegates event to a selector.
+	 *
+	 * @param {Element|String|Array} [elements]
+	 * @param {String} selector
+	 * @param {String} type
+	 * @param {Function} callback
+	 * @param {Boolean} useCapture
+	 * @return {Object}
+	 */
+	function delegate(elements, selector, type, callback, useCapture) {
+	    // Handle the regular Element usage
+	    if (typeof elements.addEventListener === 'function') {
+	        return _delegate.apply(null, arguments);
+	    }
+
+	    // Handle Element-less usage, it defaults to global delegation
+	    if (typeof type === 'function') {
+	        // Use `document` as the first parameter, then apply arguments
+	        // This is a short way to .unshift `arguments` without running into deoptimizations
+	        return _delegate.bind(null, document).apply(null, arguments);
+	    }
+
+	    // Handle Selector-based usage
+	    if (typeof elements === 'string') {
+	        elements = document.querySelectorAll(elements);
+	    }
+
+	    // Handle Array-like based usage
+	    return Array.prototype.map.call(elements, function (element) {
+	        return _delegate(element, selector, type, callback, useCapture);
+	    });
 	}
 
 	/**
@@ -23412,17 +23519,17 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
-	 * jQuery JavaScript Library v3.1.1
+	 * jQuery JavaScript Library v3.2.1
 	 * https://jquery.com/
 	 *
 	 * Includes Sizzle.js
 	 * https://sizzlejs.com/
 	 *
-	 * Copyright jQuery Foundation and other contributors
+	 * Copyright JS Foundation and other contributors
 	 * Released under the MIT license
 	 * https://jquery.org/license
 	 *
-	 * Date: 2016-09-22T22:30Z
+	 * Date: 2017-03-20T18:59Z
 	 */
 	( function( global, factory ) {
 
@@ -23501,7 +23608,7 @@
 
 
 	var
-		version = "3.1.1",
+		version = "3.2.1",
 
 		// Define a local copy of jQuery
 		jQuery = function( selector, context ) {
@@ -23649,11 +23756,11 @@
 
 					// Recurse if we're merging plain objects or arrays
 					if ( deep && copy && ( jQuery.isPlainObject( copy ) ||
-						( copyIsArray = jQuery.isArray( copy ) ) ) ) {
+						( copyIsArray = Array.isArray( copy ) ) ) ) {
 
 						if ( copyIsArray ) {
 							copyIsArray = false;
-							clone = src && jQuery.isArray( src ) ? src : [];
+							clone = src && Array.isArray( src ) ? src : [];
 
 						} else {
 							clone = src && jQuery.isPlainObject( src ) ? src : {};
@@ -23691,8 +23798,6 @@
 		isFunction: function( obj ) {
 			return jQuery.type( obj ) === "function";
 		},
-
-		isArray: Array.isArray,
 
 		isWindow: function( obj ) {
 			return obj != null && obj === obj.window;
@@ -23766,10 +23871,6 @@
 		// Microsoft forgot to hump their vendor prefix (#9572)
 		camelCase: function( string ) {
 			return string.replace( rmsPrefix, "ms-" ).replace( rdashAlpha, fcamelCase );
-		},
-
-		nodeName: function( elem, name ) {
-			return elem.nodeName && elem.nodeName.toLowerCase() === name.toLowerCase();
 		},
 
 		each: function( obj, callback ) {
@@ -26256,6 +26357,13 @@
 
 	var rneedsContext = jQuery.expr.match.needsContext;
 
+
+
+	function nodeName( elem, name ) {
+
+	  return elem.nodeName && elem.nodeName.toLowerCase() === name.toLowerCase();
+
+	};
 	var rsingleTag = ( /^<([a-z][^\/\0>:\x20\t\r\n\f]*)[\x20\t\r\n\f]*\/?>(?:<\/\1>|)$/i );
 
 
@@ -26607,7 +26715,18 @@
 			return siblings( elem.firstChild );
 		},
 		contents: function( elem ) {
-			return elem.contentDocument || jQuery.merge( [], elem.childNodes );
+	        if ( nodeName( elem, "iframe" ) ) {
+	            return elem.contentDocument;
+	        }
+
+	        // Support: IE 9 - 11 only, iOS 7 only, Android Browser <=4.3 only
+	        // Treat the template element as a regular one in browsers that
+	        // don't support it.
+	        if ( nodeName( elem, "template" ) ) {
+	            elem = elem.content || elem;
+	        }
+
+	        return jQuery.merge( [], elem.childNodes );
 		}
 	}, function( name, fn ) {
 		jQuery.fn[ name ] = function( until, selector ) {
@@ -26705,7 +26824,7 @@
 			fire = function() {
 
 				// Enforce single-firing
-				locked = options.once;
+				locked = locked || options.once;
 
 				// Execute callbacks for all pending executions,
 				// respecting firingIndex overrides and runtime changes
@@ -26874,7 +26993,7 @@
 		throw ex;
 	}
 
-	function adoptValue( value, resolve, reject ) {
+	function adoptValue( value, resolve, reject, noValue ) {
 		var method;
 
 		try {
@@ -26890,9 +27009,10 @@
 			// Other non-thenables
 			} else {
 
-				// Support: Android 4.0 only
-				// Strict mode functions invoked without .call/.apply get global-object context
-				resolve.call( undefined, value );
+				// Control `resolve` arguments by letting Array#slice cast boolean `noValue` to integer:
+				// * false: [ value ].slice( 0 ) => resolve( value )
+				// * true: [ value ].slice( 1 ) => resolve()
+				resolve.apply( undefined, [ value ].slice( noValue ) );
 			}
 
 		// For Promises/A+, convert exceptions into rejections
@@ -26902,7 +27022,7 @@
 
 			// Support: Android 4.0 only
 			// Strict mode functions invoked without .call/.apply get global-object context
-			reject.call( undefined, value );
+			reject.apply( undefined, [ value ] );
 		}
 	}
 
@@ -27227,7 +27347,8 @@
 
 			// Single- and empty arguments are adopted like Promise.resolve
 			if ( remaining <= 1 ) {
-				adoptValue( singleValue, master.done( updateFunc( i ) ).resolve, master.reject );
+				adoptValue( singleValue, master.done( updateFunc( i ) ).resolve, master.reject,
+					!remaining );
 
 				// Use .then() to unwrap secondary thenables (cf. gh-3000)
 				if ( master.state() === "pending" ||
@@ -27298,15 +27419,6 @@
 		// A counter to track how many items to wait for before
 		// the ready event fires. See #6781
 		readyWait: 1,
-
-		// Hold (or release) the ready event
-		holdReady: function( hold ) {
-			if ( hold ) {
-				jQuery.readyWait++;
-			} else {
-				jQuery.ready( true );
-			}
-		},
 
 		// Handle when the DOM is ready
 		ready: function( wait ) {
@@ -27543,7 +27655,7 @@
 			if ( key !== undefined ) {
 
 				// Support array or space separated string of keys
-				if ( jQuery.isArray( key ) ) {
+				if ( Array.isArray( key ) ) {
 
 					// If key is an array of keys...
 					// We always set camelCase keys, so remove that.
@@ -27769,7 +27881,7 @@
 
 				// Speed up dequeue by getting out quickly if this is just a lookup
 				if ( data ) {
-					if ( !queue || jQuery.isArray( data ) ) {
+					if ( !queue || Array.isArray( data ) ) {
 						queue = dataPriv.access( elem, type, jQuery.makeArray( data ) );
 					} else {
 						queue.push( data );
@@ -28146,7 +28258,7 @@
 			ret = [];
 		}
 
-		if ( tag === undefined || tag && jQuery.nodeName( context, tag ) ) {
+		if ( tag === undefined || tag && nodeName( context, tag ) ) {
 			return jQuery.merge( [ context ], ret );
 		}
 
@@ -28753,7 +28865,7 @@
 
 				// For checkbox, fire native event so checked state will be right
 				trigger: function() {
-					if ( this.type === "checkbox" && this.click && jQuery.nodeName( this, "input" ) ) {
+					if ( this.type === "checkbox" && this.click && nodeName( this, "input" ) ) {
 						this.click();
 						return false;
 					}
@@ -28761,7 +28873,7 @@
 
 				// For cross-browser consistency, don't fire native .click() on links
 				_default: function( event ) {
-					return jQuery.nodeName( event.target, "a" );
+					return nodeName( event.target, "a" );
 				}
 			},
 
@@ -29038,11 +29150,12 @@
 		rscriptTypeMasked = /^true\/(.*)/,
 		rcleanScript = /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g;
 
+	// Prefer a tbody over its parent table for containing new rows
 	function manipulationTarget( elem, content ) {
-		if ( jQuery.nodeName( elem, "table" ) &&
-			jQuery.nodeName( content.nodeType !== 11 ? content : content.firstChild, "tr" ) ) {
+		if ( nodeName( elem, "table" ) &&
+			nodeName( content.nodeType !== 11 ? content : content.firstChild, "tr" ) ) {
 
-			return elem.getElementsByTagName( "tbody" )[ 0 ] || elem;
+			return jQuery( ">tbody", elem )[ 0 ] || elem;
 		}
 
 		return elem;
@@ -29572,12 +29685,18 @@
 
 	function curCSS( elem, name, computed ) {
 		var width, minWidth, maxWidth, ret,
+
+			// Support: Firefox 51+
+			// Retrieving style before computed somehow
+			// fixes an issue with getting wrong values
+			// on detached elements
 			style = elem.style;
 
 		computed = computed || getStyles( elem );
 
-		// Support: IE <=9 only
-		// getPropertyValue is only needed for .css('filter') (#12537)
+		// getPropertyValue is needed for:
+		//   .css('filter') (IE 9 only, #12537)
+		//   .css('--customProperty) (#3144)
 		if ( computed ) {
 			ret = computed.getPropertyValue( name ) || computed[ name ];
 
@@ -29643,6 +29762,7 @@
 		// except "table", "table-cell", or "table-caption"
 		// See here for display values: https://developer.mozilla.org/en-US/docs/CSS/display
 		rdisplayswap = /^(none|table(?!-c[ea]).+)/,
+		rcustomProp = /^--/,
 		cssShow = { position: "absolute", visibility: "hidden", display: "block" },
 		cssNormalTransform = {
 			letterSpacing: "0",
@@ -29670,6 +29790,16 @@
 				return name;
 			}
 		}
+	}
+
+	// Return a property mapped along what jQuery.cssProps suggests or to
+	// a vendor prefixed property.
+	function finalPropName( name ) {
+		var ret = jQuery.cssProps[ name ];
+		if ( !ret ) {
+			ret = jQuery.cssProps[ name ] = vendorPropName( name ) || name;
+		}
+		return ret;
 	}
 
 	function setPositiveNumber( elem, value, subtract ) {
@@ -29732,43 +29862,30 @@
 
 	function getWidthOrHeight( elem, name, extra ) {
 
-		// Start with offset property, which is equivalent to the border-box value
-		var val,
-			valueIsBorderBox = true,
+		// Start with computed style
+		var valueIsBorderBox,
 			styles = getStyles( elem ),
+			val = curCSS( elem, name, styles ),
 			isBorderBox = jQuery.css( elem, "boxSizing", false, styles ) === "border-box";
 
-		// Support: IE <=11 only
-		// Running getBoundingClientRect on a disconnected node
-		// in IE throws an error.
-		if ( elem.getClientRects().length ) {
-			val = elem.getBoundingClientRect()[ name ];
+		// Computed unit is not pixels. Stop here and return.
+		if ( rnumnonpx.test( val ) ) {
+			return val;
 		}
 
-		// Some non-html elements return undefined for offsetWidth, so check for null/undefined
-		// svg - https://bugzilla.mozilla.org/show_bug.cgi?id=649285
-		// MathML - https://bugzilla.mozilla.org/show_bug.cgi?id=491668
-		if ( val <= 0 || val == null ) {
+		// Check for style in case a browser which returns unreliable values
+		// for getComputedStyle silently falls back to the reliable elem.style
+		valueIsBorderBox = isBorderBox &&
+			( support.boxSizingReliable() || val === elem.style[ name ] );
 
-			// Fall back to computed then uncomputed css if necessary
-			val = curCSS( elem, name, styles );
-			if ( val < 0 || val == null ) {
-				val = elem.style[ name ];
-			}
-
-			// Computed unit is not pixels. Stop here and return.
-			if ( rnumnonpx.test( val ) ) {
-				return val;
-			}
-
-			// Check for style in case a browser which returns unreliable values
-			// for getComputedStyle silently falls back to the reliable elem.style
-			valueIsBorderBox = isBorderBox &&
-				( support.boxSizingReliable() || val === elem.style[ name ] );
-
-			// Normalize "", auto, and prepare for extra
-			val = parseFloat( val ) || 0;
+		// Fall back to offsetWidth/Height when value is "auto"
+		// This happens for inline elements with no explicit setting (gh-3571)
+		if ( val === "auto" ) {
+			val = elem[ "offset" + name[ 0 ].toUpperCase() + name.slice( 1 ) ];
 		}
+
+		// Normalize "", auto, and prepare for extra
+		val = parseFloat( val ) || 0;
 
 		// Use the active box-sizing model to add/subtract irrelevant styles
 		return ( val +
@@ -29833,10 +29950,15 @@
 			// Make sure that we're working with the right name
 			var ret, type, hooks,
 				origName = jQuery.camelCase( name ),
+				isCustomProp = rcustomProp.test( name ),
 				style = elem.style;
 
-			name = jQuery.cssProps[ origName ] ||
-				( jQuery.cssProps[ origName ] = vendorPropName( origName ) || origName );
+			// Make sure that we're working with the right name. We don't
+			// want to query the value if it is a CSS custom property
+			// since they are user-defined.
+			if ( !isCustomProp ) {
+				name = finalPropName( origName );
+			}
 
 			// Gets hook for the prefixed version, then unprefixed version
 			hooks = jQuery.cssHooks[ name ] || jQuery.cssHooks[ origName ];
@@ -29872,7 +29994,11 @@
 				if ( !hooks || !( "set" in hooks ) ||
 					( value = hooks.set( elem, value, extra ) ) !== undefined ) {
 
-					style[ name ] = value;
+					if ( isCustomProp ) {
+						style.setProperty( name, value );
+					} else {
+						style[ name ] = value;
+					}
 				}
 
 			} else {
@@ -29891,11 +30017,15 @@
 
 		css: function( elem, name, extra, styles ) {
 			var val, num, hooks,
-				origName = jQuery.camelCase( name );
+				origName = jQuery.camelCase( name ),
+				isCustomProp = rcustomProp.test( name );
 
-			// Make sure that we're working with the right name
-			name = jQuery.cssProps[ origName ] ||
-				( jQuery.cssProps[ origName ] = vendorPropName( origName ) || origName );
+			// Make sure that we're working with the right name. We don't
+			// want to modify the value if it is a CSS custom property
+			// since they are user-defined.
+			if ( !isCustomProp ) {
+				name = finalPropName( origName );
+			}
 
 			// Try prefixed name followed by the unprefixed name
 			hooks = jQuery.cssHooks[ name ] || jQuery.cssHooks[ origName ];
@@ -29920,6 +30050,7 @@
 				num = parseFloat( val );
 				return extra === true || isFinite( num ) ? num || 0 : val;
 			}
+
 			return val;
 		}
 	} );
@@ -30019,7 +30150,7 @@
 					map = {},
 					i = 0;
 
-				if ( jQuery.isArray( name ) ) {
+				if ( Array.isArray( name ) ) {
 					styles = getStyles( elem );
 					len = name.length;
 
@@ -30157,13 +30288,18 @@
 
 
 	var
-		fxNow, timerId,
+		fxNow, inProgress,
 		rfxtypes = /^(?:toggle|show|hide)$/,
 		rrun = /queueHooks$/;
 
-	function raf() {
-		if ( timerId ) {
-			window.requestAnimationFrame( raf );
+	function schedule() {
+		if ( inProgress ) {
+			if ( document.hidden === false && window.requestAnimationFrame ) {
+				window.requestAnimationFrame( schedule );
+			} else {
+				window.setTimeout( schedule, jQuery.fx.interval );
+			}
+
 			jQuery.fx.tick();
 		}
 	}
@@ -30390,7 +30526,7 @@
 			name = jQuery.camelCase( index );
 			easing = specialEasing[ name ];
 			value = props[ index ];
-			if ( jQuery.isArray( value ) ) {
+			if ( Array.isArray( value ) ) {
 				easing = value[ 1 ];
 				value = props[ index ] = value[ 0 ];
 			}
@@ -30449,12 +30585,19 @@
 
 				deferred.notifyWith( elem, [ animation, percent, remaining ] );
 
+				// If there's more to do, yield
 				if ( percent < 1 && length ) {
 					return remaining;
-				} else {
-					deferred.resolveWith( elem, [ animation ] );
-					return false;
 				}
+
+				// If this was an empty animation, synthesize a final progress notification
+				if ( !length ) {
+					deferred.notifyWith( elem, [ animation, 1, 0 ] );
+				}
+
+				// Resolve the animation and report its conclusion
+				deferred.resolveWith( elem, [ animation ] );
+				return false;
 			},
 			animation = deferred.promise( {
 				elem: elem,
@@ -30519,6 +30662,13 @@
 			animation.opts.start.call( elem, animation );
 		}
 
+		// Attach callbacks from options
+		animation
+			.progress( animation.opts.progress )
+			.done( animation.opts.done, animation.opts.complete )
+			.fail( animation.opts.fail )
+			.always( animation.opts.always );
+
 		jQuery.fx.timer(
 			jQuery.extend( tick, {
 				elem: elem,
@@ -30527,11 +30677,7 @@
 			} )
 		);
 
-		// attach callbacks from options
-		return animation.progress( animation.opts.progress )
-			.done( animation.opts.done, animation.opts.complete )
-			.fail( animation.opts.fail )
-			.always( animation.opts.always );
+		return animation;
 	}
 
 	jQuery.Animation = jQuery.extend( Animation, {
@@ -30582,8 +30728,8 @@
 			easing: fn && easing || easing && !jQuery.isFunction( easing ) && easing
 		};
 
-		// Go to the end state if fx are off or if document is hidden
-		if ( jQuery.fx.off || document.hidden ) {
+		// Go to the end state if fx are off
+		if ( jQuery.fx.off ) {
 			opt.duration = 0;
 
 		} else {
@@ -30775,7 +30921,7 @@
 		for ( ; i < timers.length; i++ ) {
 			timer = timers[ i ];
 
-			// Checks the timer has not already been removed
+			// Run the timer and safely remove it when done (allowing for external removal)
 			if ( !timer() && timers[ i ] === timer ) {
 				timers.splice( i--, 1 );
 			}
@@ -30789,30 +30935,21 @@
 
 	jQuery.fx.timer = function( timer ) {
 		jQuery.timers.push( timer );
-		if ( timer() ) {
-			jQuery.fx.start();
-		} else {
-			jQuery.timers.pop();
-		}
+		jQuery.fx.start();
 	};
 
 	jQuery.fx.interval = 13;
 	jQuery.fx.start = function() {
-		if ( !timerId ) {
-			timerId = window.requestAnimationFrame ?
-				window.requestAnimationFrame( raf ) :
-				window.setInterval( jQuery.fx.tick, jQuery.fx.interval );
+		if ( inProgress ) {
+			return;
 		}
+
+		inProgress = true;
+		schedule();
 	};
 
 	jQuery.fx.stop = function() {
-		if ( window.cancelAnimationFrame ) {
-			window.cancelAnimationFrame( timerId );
-		} else {
-			window.clearInterval( timerId );
-		}
-
-		timerId = null;
+		inProgress = null;
 	};
 
 	jQuery.fx.speeds = {
@@ -30929,7 +31066,7 @@
 			type: {
 				set: function( elem, value ) {
 					if ( !support.radioValue && value === "radio" &&
-						jQuery.nodeName( elem, "input" ) ) {
+						nodeName( elem, "input" ) ) {
 						var val = elem.value;
 						elem.setAttribute( "type", value );
 						if ( val ) {
@@ -31360,7 +31497,7 @@
 				} else if ( typeof val === "number" ) {
 					val += "";
 
-				} else if ( jQuery.isArray( val ) ) {
+				} else if ( Array.isArray( val ) ) {
 					val = jQuery.map( val, function( value ) {
 						return value == null ? "" : value + "";
 					} );
@@ -31419,7 +31556,7 @@
 								// Don't return options that are disabled or in a disabled optgroup
 								!option.disabled &&
 								( !option.parentNode.disabled ||
-									!jQuery.nodeName( option.parentNode, "optgroup" ) ) ) {
+									!nodeName( option.parentNode, "optgroup" ) ) ) {
 
 							// Get the specific value for the option
 							value = jQuery( option ).val();
@@ -31471,7 +31608,7 @@
 	jQuery.each( [ "radio", "checkbox" ], function() {
 		jQuery.valHooks[ this ] = {
 			set: function( elem, value ) {
-				if ( jQuery.isArray( value ) ) {
+				if ( Array.isArray( value ) ) {
 					return ( elem.checked = jQuery.inArray( jQuery( elem ).val(), value ) > -1 );
 				}
 			}
@@ -31766,7 +31903,7 @@
 	function buildParams( prefix, obj, traditional, add ) {
 		var name;
 
-		if ( jQuery.isArray( obj ) ) {
+		if ( Array.isArray( obj ) ) {
 
 			// Serialize array item.
 			jQuery.each( obj, function( i, v ) {
@@ -31818,7 +31955,7 @@
 			};
 
 		// If an array was passed in, assume that it is an array of form elements.
-		if ( jQuery.isArray( a ) || ( a.jquery && !jQuery.isPlainObject( a ) ) ) {
+		if ( Array.isArray( a ) || ( a.jquery && !jQuery.isPlainObject( a ) ) ) {
 
 			// Serialize the form elements
 			jQuery.each( a, function() {
@@ -31864,7 +32001,7 @@
 					return null;
 				}
 
-				if ( jQuery.isArray( val ) ) {
+				if ( Array.isArray( val ) ) {
 					return jQuery.map( val, function( val ) {
 						return { name: elem.name, value: val.replace( rCRLF, "\r\n" ) };
 					} );
@@ -33289,13 +33426,6 @@
 
 
 
-	/**
-	 * Gets a window from an element
-	 */
-	function getWindow( elem ) {
-		return jQuery.isWindow( elem ) ? elem : elem.nodeType === 9 && elem.defaultView;
-	}
-
 	jQuery.offset = {
 		setOffset: function( elem, options, i ) {
 			var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
@@ -33360,13 +33490,14 @@
 					} );
 			}
 
-			var docElem, win, rect, doc,
+			var doc, docElem, rect, win,
 				elem = this[ 0 ];
 
 			if ( !elem ) {
 				return;
 			}
 
+			// Return zeros for disconnected and hidden (display: none) elements (gh-2310)
 			// Support: IE <=11 only
 			// Running getBoundingClientRect on a
 			// disconnected node in IE throws an error
@@ -33376,20 +33507,14 @@
 
 			rect = elem.getBoundingClientRect();
 
-			// Make sure element is not hidden (display: none)
-			if ( rect.width || rect.height ) {
-				doc = elem.ownerDocument;
-				win = getWindow( doc );
-				docElem = doc.documentElement;
+			doc = elem.ownerDocument;
+			docElem = doc.documentElement;
+			win = doc.defaultView;
 
-				return {
-					top: rect.top + win.pageYOffset - docElem.clientTop,
-					left: rect.left + win.pageXOffset - docElem.clientLeft
-				};
-			}
-
-			// Return zeros for disconnected and hidden elements (gh-2310)
-			return rect;
+			return {
+				top: rect.top + win.pageYOffset - docElem.clientTop,
+				left: rect.left + win.pageXOffset - docElem.clientLeft
+			};
 		},
 
 		position: function() {
@@ -33415,7 +33540,7 @@
 
 				// Get correct offsets
 				offset = this.offset();
-				if ( !jQuery.nodeName( offsetParent[ 0 ], "html" ) ) {
+				if ( !nodeName( offsetParent[ 0 ], "html" ) ) {
 					parentOffset = offsetParent.offset();
 				}
 
@@ -33462,7 +33587,14 @@
 
 		jQuery.fn[ method ] = function( val ) {
 			return access( this, function( elem, method, val ) {
-				var win = getWindow( elem );
+
+				// Coalesce documents and windows
+				var win;
+				if ( jQuery.isWindow( elem ) ) {
+					win = elem;
+				} else if ( elem.nodeType === 9 ) {
+					win = elem.defaultView;
+				}
 
 				if ( val === undefined ) {
 					return win ? win[ prop ] : elem[ method ];
@@ -33571,7 +33703,16 @@
 		}
 	} );
 
+	jQuery.holdReady = function( hold ) {
+		if ( hold ) {
+			jQuery.readyWait++;
+		} else {
+			jQuery.ready( true );
+		}
+	};
+	jQuery.isArray = Array.isArray;
 	jQuery.parseJSON = JSON.parse;
+	jQuery.nodeName = nodeName;
 
 
 
@@ -33628,7 +33769,6 @@
 
 
 
-
 	return jQuery;
 	} );
 
@@ -33672,21 +33812,25 @@
 	    strictNullHandling: false
 	};
 
-	var parseValues = function parseValues(str, options) {
+	var parseValues = function parseQueryStringValues(str, options) {
 	    var obj = {};
-	    var parts = str.split(options.delimiter, options.parameterLimit === Infinity ? undefined : options.parameterLimit);
+	    var cleanStr = options.ignoreQueryPrefix ? str.replace(/^\?/, '') : str;
+	    var limit = options.parameterLimit === Infinity ? undefined : options.parameterLimit;
+	    var parts = cleanStr.split(options.delimiter, limit);
 
 	    for (var i = 0; i < parts.length; ++i) {
 	        var part = parts[i];
-	        var pos = part.indexOf(']=') === -1 ? part.indexOf('=') : part.indexOf(']=') + 1;
+
+	        var bracketEqualsPos = part.indexOf(']=');
+	        var pos = bracketEqualsPos === -1 ? part.indexOf('=') : bracketEqualsPos + 1;
 
 	        var key, val;
 	        if (pos === -1) {
-	            key = options.decoder(part);
+	            key = options.decoder(part, defaults.decoder);
 	            val = options.strictNullHandling ? null : '';
 	        } else {
-	            key = options.decoder(part.slice(0, pos));
-	            val = options.decoder(part.slice(pos + 1));
+	            key = options.decoder(part.slice(0, pos), defaults.decoder);
+	            val = options.decoder(part.slice(pos + 1), defaults.decoder);
 	        }
 	        if (has.call(obj, key)) {
 	            obj[key] = [].concat(obj[key]).concat(val);
@@ -33698,68 +33842,71 @@
 	    return obj;
 	};
 
-	var parseObject = function parseObject(chain, val, options) {
-	    if (!chain.length) {
-	        return val;
-	    }
+	var parseObject = function (chain, val, options) {
+	    var leaf = val;
 
-	    var root = chain.shift();
+	    for (var i = chain.length - 1; i >= 0; --i) {
+	        var obj;
+	        var root = chain[i];
 
-	    var obj;
-	    if (root === '[]') {
-	        obj = [];
-	        obj = obj.concat(parseObject(chain, val, options));
-	    } else {
-	        obj = options.plainObjects ? Object.create(null) : {};
-	        var cleanRoot = root[0] === '[' && root[root.length - 1] === ']' ? root.slice(1, root.length - 1) : root;
-	        var index = parseInt(cleanRoot, 10);
-	        if (
-	            !isNaN(index) &&
-	            root !== cleanRoot &&
-	            String(index) === cleanRoot &&
-	            index >= 0 &&
-	            (options.parseArrays && index <= options.arrayLimit)
-	        ) {
+	        if (root === '[]') {
 	            obj = [];
-	            obj[index] = parseObject(chain, val, options);
+	            obj = obj.concat(leaf);
 	        } else {
-	            obj[cleanRoot] = parseObject(chain, val, options);
+	            obj = options.plainObjects ? Object.create(null) : {};
+	            var cleanRoot = root.charAt(0) === '[' && root.charAt(root.length - 1) === ']' ? root.slice(1, -1) : root;
+	            var index = parseInt(cleanRoot, 10);
+	            if (
+	                !isNaN(index)
+	                && root !== cleanRoot
+	                && String(index) === cleanRoot
+	                && index >= 0
+	                && (options.parseArrays && index <= options.arrayLimit)
+	            ) {
+	                obj = [];
+	                obj[index] = leaf;
+	            } else {
+	                obj[cleanRoot] = leaf;
+	            }
 	        }
+
+	        leaf = obj;
 	    }
 
-	    return obj;
+	    return leaf;
 	};
 
-	var parseKeys = function parseKeys(givenKey, val, options) {
+	var parseKeys = function parseQueryStringKeys(givenKey, val, options) {
 	    if (!givenKey) {
 	        return;
 	    }
 
 	    // Transform dot notation to bracket notation
-	    var key = options.allowDots ? givenKey.replace(/\.([^\.\[]+)/g, '[$1]') : givenKey;
+	    var key = options.allowDots ? givenKey.replace(/\.([^.[]+)/g, '[$1]') : givenKey;
 
 	    // The regex chunks
 
-	    var parent = /^([^\[\]]*)/;
-	    var child = /(\[[^\[\]]*\])/g;
+	    var brackets = /(\[[^[\]]*])/;
+	    var child = /(\[[^[\]]*])/g;
 
 	    // Get the parent
 
-	    var segment = parent.exec(key);
+	    var segment = brackets.exec(key);
+	    var parent = segment ? key.slice(0, segment.index) : key;
 
 	    // Stash the parent if it exists
 
 	    var keys = [];
-	    if (segment[1]) {
+	    if (parent) {
 	        // If we aren't using plain objects, optionally prefix keys
 	        // that would overwrite object prototype properties
-	        if (!options.plainObjects && has.call(Object.prototype, segment[1])) {
+	        if (!options.plainObjects && has.call(Object.prototype, parent)) {
 	            if (!options.allowPrototypes) {
 	                return;
 	            }
 	        }
 
-	        keys.push(segment[1]);
+	        keys.push(parent);
 	    }
 
 	    // Loop through children appending to the array until we hit depth
@@ -33767,9 +33914,9 @@
 	    var i = 0;
 	    while ((segment = child.exec(key)) !== null && i < options.depth) {
 	        i += 1;
-	        if (!options.plainObjects && has.call(Object.prototype, segment[1].replace(/\[|\]/g, ''))) {
+	        if (!options.plainObjects && has.call(Object.prototype, segment[1].slice(1, -1))) {
 	            if (!options.allowPrototypes) {
-	                continue;
+	                return;
 	            }
 	        }
 	        keys.push(segment[1]);
@@ -33785,12 +33932,13 @@
 	};
 
 	module.exports = function (str, opts) {
-	    var options = opts || {};
+	    var options = opts ? utils.assign({}, opts) : {};
 
 	    if (options.decoder !== null && options.decoder !== undefined && typeof options.decoder !== 'function') {
 	        throw new TypeError('Decoder has to be a function.');
 	    }
 
+	    options.ignoreQueryPrefix = options.ignoreQueryPrefix === true;
 	    options.delimiter = typeof options.delimiter === 'string' || utils.isRegExp(options.delimiter) ? options.delimiter : defaults.delimiter;
 	    options.depth = typeof options.depth === 'number' ? options.depth : defaults.depth;
 	    options.arrayLimit = typeof options.arrayLimit === 'number' ? options.arrayLimit : defaults.arrayLimit;
@@ -33832,13 +33980,13 @@
 	var formats = __webpack_require__(87);
 
 	var arrayPrefixGenerators = {
-	    brackets: function brackets(prefix) {
+	    brackets: function brackets(prefix) { // eslint-disable-line func-name-matching
 	        return prefix + '[]';
 	    },
-	    indices: function indices(prefix, key) {
+	    indices: function indices(prefix, key) { // eslint-disable-line func-name-matching
 	        return prefix + '[' + key + ']';
 	    },
-	    repeat: function repeat(prefix) {
+	    repeat: function repeat(prefix) { // eslint-disable-line func-name-matching
 	        return prefix;
 	    }
 	};
@@ -33849,14 +33997,28 @@
 	    delimiter: '&',
 	    encode: true,
 	    encoder: utils.encode,
-	    serializeDate: function serializeDate(date) {
+	    encodeValuesOnly: false,
+	    serializeDate: function serializeDate(date) { // eslint-disable-line func-name-matching
 	        return toISO.call(date);
 	    },
 	    skipNulls: false,
 	    strictNullHandling: false
 	};
 
-	var stringify = function stringify(object, prefix, generateArrayPrefix, strictNullHandling, skipNulls, encoder, filter, sort, allowDots, serializeDate, formatter) {
+	var stringify = function stringify( // eslint-disable-line func-name-matching
+	    object,
+	    prefix,
+	    generateArrayPrefix,
+	    strictNullHandling,
+	    skipNulls,
+	    encoder,
+	    filter,
+	    sort,
+	    allowDots,
+	    serializeDate,
+	    formatter,
+	    encodeValuesOnly
+	) {
 	    var obj = object;
 	    if (typeof filter === 'function') {
 	        obj = filter(prefix, obj);
@@ -33864,7 +34026,7 @@
 	        obj = serializeDate(obj);
 	    } else if (obj === null) {
 	        if (strictNullHandling) {
-	            return encoder ? encoder(prefix) : prefix;
+	            return encoder && !encodeValuesOnly ? encoder(prefix, defaults.encoder) : prefix;
 	        }
 
 	        obj = '';
@@ -33872,7 +34034,8 @@
 
 	    if (typeof obj === 'string' || typeof obj === 'number' || typeof obj === 'boolean' || utils.isBuffer(obj)) {
 	        if (encoder) {
-	            return [formatter(encoder(prefix)) + '=' + formatter(encoder(obj))];
+	            var keyValue = encodeValuesOnly ? prefix : encoder(prefix, defaults.encoder);
+	            return [formatter(keyValue) + '=' + formatter(encoder(obj, defaults.encoder))];
 	        }
 	        return [formatter(prefix) + '=' + formatter(String(obj))];
 	    }
@@ -33910,7 +34073,8 @@
 	                sort,
 	                allowDots,
 	                serializeDate,
-	                formatter
+	                formatter,
+	                encodeValuesOnly
 	            ));
 	        } else {
 	            values = values.concat(stringify(
@@ -33924,7 +34088,8 @@
 	                sort,
 	                allowDots,
 	                serializeDate,
-	                formatter
+	                formatter,
+	                encodeValuesOnly
 	            ));
 	        }
 	    }
@@ -33934,27 +34099,29 @@
 
 	module.exports = function (object, opts) {
 	    var obj = object;
-	    var options = opts || {};
+	    var options = opts ? utils.assign({}, opts) : {};
+
+	    if (options.encoder !== null && options.encoder !== undefined && typeof options.encoder !== 'function') {
+	        throw new TypeError('Encoder has to be a function.');
+	    }
+
 	    var delimiter = typeof options.delimiter === 'undefined' ? defaults.delimiter : options.delimiter;
 	    var strictNullHandling = typeof options.strictNullHandling === 'boolean' ? options.strictNullHandling : defaults.strictNullHandling;
 	    var skipNulls = typeof options.skipNulls === 'boolean' ? options.skipNulls : defaults.skipNulls;
 	    var encode = typeof options.encode === 'boolean' ? options.encode : defaults.encode;
-	    var encoder = encode ? (typeof options.encoder === 'function' ? options.encoder : defaults.encoder) : null;
+	    var encoder = typeof options.encoder === 'function' ? options.encoder : defaults.encoder;
 	    var sort = typeof options.sort === 'function' ? options.sort : null;
 	    var allowDots = typeof options.allowDots === 'undefined' ? false : options.allowDots;
 	    var serializeDate = typeof options.serializeDate === 'function' ? options.serializeDate : defaults.serializeDate;
+	    var encodeValuesOnly = typeof options.encodeValuesOnly === 'boolean' ? options.encodeValuesOnly : defaults.encodeValuesOnly;
 	    if (typeof options.format === 'undefined') {
-	        options.format = formats.default;
+	        options.format = formats['default'];
 	    } else if (!Object.prototype.hasOwnProperty.call(formats.formatters, options.format)) {
 	        throw new TypeError('Unknown format option provided.');
 	    }
 	    var formatter = formats.formatters[options.format];
 	    var objKeys;
 	    var filter;
-
-	    if (options.encoder !== null && options.encoder !== undefined && typeof options.encoder !== 'function') {
-	        throw new TypeError('Encoder has to be a function.');
-	    }
 
 	    if (typeof options.filter === 'function') {
 	        filter = options.filter;
@@ -34002,16 +34169,20 @@
 	            generateArrayPrefix,
 	            strictNullHandling,
 	            skipNulls,
-	            encoder,
+	            encode ? encoder : null,
 	            filter,
 	            sort,
 	            allowDots,
 	            serializeDate,
-	            formatter
+	            formatter,
+	            encodeValuesOnly
 	        ));
 	    }
 
-	    return keys.join(delimiter);
+	    var joined = keys.join(delimiter);
+	    var prefix = options.addQueryPrefix === true ? '?' : '';
+
+	    return joined.length > 0 ? prefix + joined : '';
 	};
 
 
@@ -42653,8 +42824,18 @@
 	        selectedText = element.value;
 	    }
 	    else if (element.nodeName === 'INPUT' || element.nodeName === 'TEXTAREA') {
-	        element.focus();
+	        var isReadOnly = element.hasAttribute('readonly');
+
+	        if (!isReadOnly) {
+	            element.setAttribute('readonly', '');
+	        }
+
+	        element.select();
 	        element.setSelectionRange(0, element.value.length);
+
+	        if (!isReadOnly) {
+	            element.removeAttribute('readonly');
+	        }
 
 	        selectedText = element.value;
 	    }
@@ -42695,8 +42876,8 @@
 	if(false) {
 		// When the styles change, update the <style> tags
 		if(!content.locals) {
-			module.hot.accept("!!./../../node_modules/css-loader/index.js!./style.css", function() {
-				var newContent = require("!!./../../node_modules/css-loader/index.js!./style.css");
+			module.hot.accept("!!../../node_modules/css-loader/index.js!./style.css", function() {
+				var newContent = require("!!../../node_modules/css-loader/index.js!./style.css");
 				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 				update(newContent);
 			});
@@ -42721,8 +42902,8 @@
 	if(false) {
 		// When the styles change, update the <style> tags
 		if(!content.locals) {
-			module.hot.accept("!!./../css-loader/index.js!./normalize.css", function() {
-				var newContent = require("!!./../css-loader/index.js!./normalize.css");
+			module.hot.accept("!!../css-loader/index.js!./normalize.css", function() {
+				var newContent = require("!!../css-loader/index.js!./normalize.css");
 				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 				update(newContent);
 			});
@@ -42747,8 +42928,8 @@
 	if(false) {
 		// When the styles change, update the <style> tags
 		if(!content.locals) {
-			module.hot.accept("!!./node_modules/css-loader/index.js!./node_modules/stylus-loader/index.js?paths[]=.!./app.styl", function() {
-				var newContent = require("!!./node_modules/css-loader/index.js!./node_modules/stylus-loader/index.js?paths[]=.!./app.styl");
+			module.hot.accept("!!./node_modules/css-loader/index.js!./node_modules/stylus-loader/index.js?paths[]=./!./app.styl", function() {
+				var newContent = require("!!./node_modules/css-loader/index.js!./node_modules/stylus-loader/index.js?paths[]=./!./app.styl");
 				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 				update(newContent);
 			});
@@ -42773,8 +42954,8 @@
 	if(false) {
 		// When the styles change, update the <style> tags
 		if(!content.locals) {
-			module.hot.accept("!!./../../node_modules/css-loader/index.js!./../../node_modules/stylus-loader/index.js?paths[]=.!./style.styl", function() {
-				var newContent = require("!!./../../node_modules/css-loader/index.js!./../../node_modules/stylus-loader/index.js?paths[]=.!./style.styl");
+			module.hot.accept("!!../../node_modules/css-loader/index.js!../../node_modules/stylus-loader/index.js?paths[]=./!./style.styl", function() {
+				var newContent = require("!!../../node_modules/css-loader/index.js!../../node_modules/stylus-loader/index.js?paths[]=./!./style.styl");
 				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 				update(newContent);
 			});
@@ -42799,8 +42980,8 @@
 	if(false) {
 		// When the styles change, update the <style> tags
 		if(!content.locals) {
-			module.hot.accept("!!./../../node_modules/css-loader/index.js!./../../node_modules/stylus-loader/index.js?paths[]=.!./style.styl", function() {
-				var newContent = require("!!./../../node_modules/css-loader/index.js!./../../node_modules/stylus-loader/index.js?paths[]=.!./style.styl");
+			module.hot.accept("!!../../node_modules/css-loader/index.js!../../node_modules/stylus-loader/index.js?paths[]=./!./style.styl", function() {
+				var newContent = require("!!../../node_modules/css-loader/index.js!../../node_modules/stylus-loader/index.js?paths[]=./!./style.styl");
 				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 				update(newContent);
 			});
@@ -42825,8 +43006,8 @@
 	if(false) {
 		// When the styles change, update the <style> tags
 		if(!content.locals) {
-			module.hot.accept("!!./../../node_modules/css-loader/index.js!./../../node_modules/stylus-loader/index.js?paths[]=.!./style.styl", function() {
-				var newContent = require("!!./../../node_modules/css-loader/index.js!./../../node_modules/stylus-loader/index.js?paths[]=.!./style.styl");
+			module.hot.accept("!!../../node_modules/css-loader/index.js!../../node_modules/stylus-loader/index.js?paths[]=./!./style.styl", function() {
+				var newContent = require("!!../../node_modules/css-loader/index.js!../../node_modules/stylus-loader/index.js?paths[]=./!./style.styl");
 				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 				update(newContent);
 			});
@@ -42851,8 +43032,8 @@
 	if(false) {
 		// When the styles change, update the <style> tags
 		if(!content.locals) {
-			module.hot.accept("!!./../../node_modules/css-loader/index.js!./../../node_modules/stylus-loader/index.js?paths[]=.!./style.styl", function() {
-				var newContent = require("!!./../../node_modules/css-loader/index.js!./../../node_modules/stylus-loader/index.js?paths[]=.!./style.styl");
+			module.hot.accept("!!../../node_modules/css-loader/index.js!../../node_modules/stylus-loader/index.js?paths[]=./!./style.styl", function() {
+				var newContent = require("!!../../node_modules/css-loader/index.js!../../node_modules/stylus-loader/index.js?paths[]=./!./style.styl");
 				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 				update(newContent);
 			});
@@ -42877,8 +43058,8 @@
 	if(false) {
 		// When the styles change, update the <style> tags
 		if(!content.locals) {
-			module.hot.accept("!!./../../css-loader/index.js!./sweetalert.css", function() {
-				var newContent = require("!!./../../css-loader/index.js!./sweetalert.css");
+			module.hot.accept("!!../../css-loader/index.js!./sweetalert.css", function() {
+				var newContent = require("!!../../css-loader/index.js!./sweetalert.css");
 				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 				update(newContent);
 			});
@@ -42903,8 +43084,8 @@
 	if(false) {
 		// When the styles change, update the <style> tags
 		if(!content.locals) {
-			module.hot.accept("!!./../../css-loader/index.js!./toastr.min.css", function() {
-				var newContent = require("!!./../../css-loader/index.js!./toastr.min.css");
+			module.hot.accept("!!../../css-loader/index.js!./toastr.min.css", function() {
+				var newContent = require("!!../../css-loader/index.js!./toastr.min.css");
 				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 				update(newContent);
 			});
@@ -43491,6 +43672,22 @@
 /***/ function(module, exports) {
 
 	module.exports = function() { throw new Error("define cannot be used indirect"); };
+
+
+/***/ },
+/* 276 */
+/***/ function(module, exports) {
+
+	module.exports = function(module) {
+		if(!module.webpackPolyfill) {
+			module.deprecate = function() {};
+			module.paths = [];
+			// module.parent = undefined by default
+			module.children = [];
+			module.webpackPolyfill = 1;
+		}
+		return module;
+	}
 
 
 /***/ }
